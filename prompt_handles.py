@@ -5,11 +5,11 @@ import re
 class Response(object):
     def __init__(self):
         self.p_ans = tuple()
-        self.csens = True
+        self.csens = False
         self.ans_restrict = None
         self.regx = r''
         self.str_restriction = lambda x: False
-        self.restrictions = dict(string=False, regx=False)
+        self.restrictions = dict(str_restr=False, regx=False)
 
     def set_restrictions(self, case_sensitive=True, possible_answers=tuple(),
                          answer_restrictions=None):
@@ -41,7 +41,7 @@ class Response(object):
 
     def enable_restriction(self, restriction_type, restriction_value):
         self.restrictions[restriction_type] = True
-        if restriction_type == 'string':
+        if restriction_type == 'str_restr':
             self.str_restriction = restriction_value
         else:
             self.regx = restriction_value
@@ -56,12 +56,11 @@ class Response(object):
                                   alphanum=lambda x: x.isalnum())
         if val in usual_restrictions.keys():
             self.restrictions_match_possible_answers(restriction=usual_restrictions[val])
-            self.enable_restriction('string', usual_restrictions[val])
+            self.enable_restriction('str_restr', usual_restrictions[val])
         elif self.is_regex(val):
             regx = val.strip("regex:")
             self.restrictions_match_possible_answers(regex=regx)
-            self.restrictions['regx'] = True
-            self.regx = regx
+            self.enable_restriction('regx', regx)
         else:
             raise NotImplementedError('Wrong restriction given\n'
                                       'Use --help to see possible restrictions')
@@ -79,13 +78,15 @@ class Response(object):
         return True
 
     def restrictions_match_possible_answers(self, restriction=None, regex=None):
-        err = RuntimeError('Possible answers given do not match restriction')
+        err = RuntimeError('Possible given answers do not match restriction!')
         if restriction:
             for answer in self.possible_answers:
                 if not restriction(answer):
                     raise err
         elif regex:
-            pass
+            for answer in self.possible_answers:
+                if not self.match_regex(answer):
+                    raise err
 
     def get_prompt_response(self, question):
         answer = None
@@ -100,33 +101,46 @@ class Response(object):
         else:
             return answer
 
+    def match_possible_answers(self, answer):
+        if self.case_sensitive:
+            answer = answer.upper()
+            answers = []
+            for ans in self.possible_answers:
+                answers.append(ans.upper())
+            self.possible_answers = tuple(answers)
+
+        if answer not in self.possible_answers:
+            return False
+        else:
+            return True
+
+    def match_answer_restriction(self, answer):
+        if self.restrictions['str_restr'] and not self.str_restriction(answer):
+            return False
+        elif self.restrictions['regx'] and not self.match_regex(answer):
+            return False
+        else:
+            return True
+
     def match_restrictions(self, answer):
         if self.possible_answers:
-            if answer not in self.possible_answers:
-                return False
-            else:
-                return True
+            return self.match_possible_answers(answer)
 
         if self.answer_restriction:
-            if self.restrictions['string'] and not self.str_restriction(answer):
-                return False
-            elif self.restrictions['regx'] and not self.match_regex(answer):
-                return False
-            else:
-                return True
+            return self.match_answer_restriction(answer)
 
         return True
 
-    def match_regex(self, answer):
+    def match_regex(self, sentence):
         pattern = re.compile(self.regx)
-        if pattern.match(answer).group() == answer:
+        if pattern.match(sentence).group() == sentence:
             return True
         else:
             return False
 
 
 class PromptWrapper(object):
-    def __init__(self, question, case_sensitive=True, accepted_answers=tuple(),
+    def __init__(self, question, case_sensitive=False, accepted_answers=tuple(),
                  answer_type_restriction=None):
         self.question = question
         self.case_sensitive = case_sensitive
@@ -134,7 +148,7 @@ class PromptWrapper(object):
         self.answer_type_restriction = answer_type_restriction
         self.response = Response()
 
-    def set_restrictions(self, case_sensitive=True, possible_answers=tuple(),
+    def set_restrictions(self, case_sensitive=False, possible_answers=tuple(),
                          answer_restrictions=None):
         self.response.set_restrictions(case_sensitive, possible_answers,
                                        answer_restrictions)
