@@ -9,7 +9,6 @@ def mock_input(func):
             with mock.patch('builtins.input', return_value=args[-1]):
                 return func(*args)
         return mock_input_builtin
-        # return mock.patch('builtins.input', return_value=answer)
 
 
 class TestPromptWrapper(TestCase):
