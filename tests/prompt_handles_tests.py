@@ -20,38 +20,65 @@ class TestPromptWrapper(TestCase):
     def get_mocked_answer(self, mocked_ans):
         return self.prompt.get_prompt_answer()
 
+    def test_get_prompt_answer_not_approved(self):
+        self.prompt.set_restrictions(possible_answers=('yes', 'no'))
+        answer = self.get_mocked_answer('asd123')
+        self.assertEqual(None, answer)
+
+    def test_get_prompt_answer_approved(self):
+        self.prompt.set_restrictions(possible_answers=('yes', 'no'))
+        answer = self.get_mocked_answer('yes')
+        self.assertEqual('yes', answer)
+
     def test_get_prompt_answer_anything(self):
         answer = self.get_mocked_answer('1')
         self.assertEqual('1', answer)
 
-    def test_get_prompt_answer_only_nums_wrong_aswer(self):
+    def test_get_prompt_answer_only_nums_wrong(self):
         self.prompt.set_restrictions(answer_restrictions='num')
         answer = self.get_mocked_answer('tt')
         self.assertEqual(None, answer)
 
-    def test_get_prompt_answer_only_nums_correct_aswer(self):
+    def test_get_prompt_answer_only_nums_correct(self):
         self.prompt.set_restrictions(answer_restrictions='num')
         answer = self.get_mocked_answer('123')
         self.assertEqual('123', answer)
 
-    def test_get_prompt_answer_only_alpha_wrong_aswer(self):
+    def test_get_prompt_answer_only_alpha_wrong(self):
         self.prompt.set_restrictions(answer_restrictions='alpha')
         answer = self.get_mocked_answer('12asd')
         self.assertEqual(None, answer)
 
-    def test_get_prompt_answer_only_alpha_correct_aswer(self):
+    def test_get_prompt_answer_only_alpha_correct(self):
         self.prompt.set_restrictions(answer_restrictions='alpha')
         answer = self.get_mocked_answer('asd')
         self.assertEqual('asd', answer)
 
-    def test_get_prompt_answer_only_alphanumeric_wrong_aswer(self):
+    def test_get_prompt_answer_only_alphanumeric_wrong(self):
         self.prompt.set_restrictions(answer_restrictions='alphanum')
         answer = self.get_mocked_answer('12asd_')
         self.assertEqual(None, answer)
 
-    def test_get_prompt_answer_only_alphanum_correct_aswer(self):
+    def test_get_prompt_answer_only_alphanum_correct(self):
         self.prompt.set_restrictions(answer_restrictions='alphanum')
         answer = self.get_mocked_answer('asd123')
         self.assertEqual('asd123', answer)
 
+    def test_get_prompt_answer_wrong_regex(self):
+        with self.assertRaises(RuntimeError):
+            self.prompt.set_restrictions(answer_restrictions='abc regex:')
 
+    def test_get_prompt_answer_regex_wrong_answer(self):
+        self.prompt.set_restrictions(answer_restrictions='regex:(\w+)')
+        answer = self.get_mocked_answer('hey!!~')
+        self.assertEqual(None, answer)
+
+    def test_get_prompt_answer_regex_correct_answer(self):
+        self.prompt.set_restrictions(answer_restrictions='regex:yes|no')
+        answer = self.get_mocked_answer('yes')
+        self.assertEqual('yes', answer)
+
+    def test_get_prompt_answer_regex_correct_answer_2(self):
+        self.prompt.set_restrictions(answer_restrictions='regex:(\w+)')
+        answer = self.get_mocked_answer('yes')
+        self.assertEqual('yes', answer)
