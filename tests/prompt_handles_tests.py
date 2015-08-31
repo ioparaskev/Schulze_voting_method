@@ -102,7 +102,7 @@ class TestPromptWrapper(TestCase):
                                          answer_restrictions='regex:\w+')
 
     def test_prompt_answer_case_sensitive_ok(self):
-        self.prompt.set_restrictions(case_sensitive=True,
+        self.prompt.set_restrictions(case_sensitive='on',
                                      possible_answers=('Yes', 'No'))
         answer = self.get_mocked_answer('Yes')
         self.assertEqual('Yes', answer)

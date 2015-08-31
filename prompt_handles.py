@@ -5,13 +5,13 @@ import re
 class Response(object):
     def __init__(self):
         self.p_ans = tuple()
-        self.csens = False
+        self.csens = 'off'
         self.ans_restrict = None
         self.regx = r''
         self.str_restriction = lambda x: False
         self.restrictions = dict(str_restr=False, regx=False)
 
-    def set_restrictions(self, case_sensitive=True, possible_answers=tuple(),
+    def set_restrictions(self, case_sensitive='on', possible_answers=tuple(),
                          answer_restrictions=None):
         self.case_sensitive = case_sensitive
         self.possible_answers = possible_answers
@@ -23,7 +23,7 @@ class Response(object):
 
     @case_sensitive.setter
     def case_sensitive(self, val):
-        if val not in (True, False):
+        if val not in ('on', 'off'):
             raise ValueError('Only bool values allowed for case sensitive set!')
         self.csens = val
 
@@ -102,7 +102,7 @@ class Response(object):
             return answer
 
     def match_possible_answers(self, answer):
-        if self.case_sensitive:
+        if self.case_sensitive == 'on':
             answer = answer.upper()
             answers = []
             for ans in self.possible_answers:
@@ -140,7 +140,7 @@ class Response(object):
 
 
 class PromptWrapper(object):
-    def __init__(self, question, case_sensitive=False, accepted_answers=tuple(),
+    def __init__(self, question, case_sensitive='off', accepted_answers=tuple(),
                  answer_type_restriction=None):
         self.question = question
         self.case_sensitive = case_sensitive
@@ -148,7 +148,7 @@ class PromptWrapper(object):
         self.answer_type_restriction = answer_type_restriction
         self.response = Response()
 
-    def set_restrictions(self, case_sensitive=False, possible_answers=tuple(),
+    def set_restrictions(self, case_sensitive='off', possible_answers=tuple(),
                          answer_restrictions=None):
         self.response.set_restrictions(case_sensitive, possible_answers,
                                        answer_restrictions)
