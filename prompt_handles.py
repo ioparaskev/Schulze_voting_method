@@ -46,17 +46,29 @@ class Response(object):
         else:
             self.regx = restriction_value
 
+    @staticmethod
+    def get_usual_str_restriction_functions():
+        return dict(alpha=lambda x: x.isalpha(),
+                    num=lambda x: x.isnumeric(),
+                    alphanum=lambda x: x.isalnum())
+
+    @staticmethod
+    def is_str_restriction(restriction):
+        return restriction in Response.get_usual_str_restriction_functions().keys()
+
+    def set_str_restriction(self, restriction):
+        restrict_func = self.get_usual_str_restriction_functions()[restriction]
+        self.restrictions_match_possible_answers(restriction=restrict_func)
+        self.enable_restriction('str_restr', restrict_func)
+
+
     @answer_restriction.setter
     def answer_restriction(self, val):
         if not val:
             return
 
-        usual_restrictions = dict(alpha=lambda x: x.isalpha(),
-                                  num=lambda x: x.isnumeric(),
-                                  alphanum=lambda x: x.isalnum())
-        if val in usual_restrictions.keys():
-            self.restrictions_match_possible_answers(restriction=usual_restrictions[val])
-            self.enable_restriction('str_restr', usual_restrictions[val])
+        if self.is_str_restriction(val):
+            self.set_str_restriction(val)
         elif self.is_regex(val):
             regx = val.strip("regex:")
             self.restrictions_match_possible_answers(regex=regx)
