@@ -1,5 +1,6 @@
 __author__ = 'ioparaskev'
 import re
+import logging
 
 
 class Response(object):
@@ -100,19 +101,6 @@ class Response(object):
                 if not self.match_regex(answer):
                     raise err
 
-    def get_prompt_response(self, question):
-        answer = None
-        for x in range(3):
-            ans = input(question)
-            if self.match_restrictions(ans):
-                answer = ans
-                break
-
-        if not answer:
-            raise RuntimeError('Wrong answer given 3 times\nExiting')
-        else:
-            return answer
-
     def match_possible_answers(self, answer):
         if self.case_sensitive == 'on':
             answer = answer.upper()
@@ -125,6 +113,13 @@ class Response(object):
             return False
         else:
             return True
+
+    def match_regex(self, sentence):
+        pattern = re.compile(self.regx)
+        if pattern.match(sentence).group() == sentence:
+            return True
+        else:
+            return False
 
     def match_answer_restriction(self, answer):
         if self.restrictions['str_restr'] and not self.str_restriction(answer):
@@ -143,12 +138,18 @@ class Response(object):
 
         return True
 
-    def match_regex(self, sentence):
-        pattern = re.compile(self.regx)
-        if pattern.match(sentence).group() == sentence:
-            return True
+    def get_prompt_response(self, question):
+        answer = None
+        for x in range(3):
+            ans = input(question)
+            if self.match_restrictions(ans):
+                answer = ans
+                break
+
+        if not answer:
+            raise RuntimeError('Wrong answer given 3 times\nExiting')
         else:
-            return False
+            return answer
 
 
 class PromptWrapper(object):
@@ -170,6 +171,6 @@ class PromptWrapper(object):
         try:
             answer = self.response.get_prompt_response(self.question)
         except RuntimeError as error:
-            print(error)
+            logging.error(error)
         finally:
             return answer
